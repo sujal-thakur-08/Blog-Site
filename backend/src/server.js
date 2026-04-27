@@ -6,13 +6,14 @@ const jwt = require("jsonwebtoken");
 const { blogs } = require("./data/blogs");
 const { pages } = require("./data/pages");
 const { drops } = require("./data/drops");
+const prisma = require("./db");
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
 const jwtSecret = process.env.JWT_SECRET || "dev-only-change-me";
 const roleSet = new Set(["reader", "editor", "administrator"]);
 const writerRoleSet = new Set(["editor", "administrator"]);
-const usersByEmail = new Map();
+// persistence will be handled by Prisma (SQLite) via `prisma`
 const stopWordSet = new Set([
   "a",
   "an",
@@ -200,10 +201,11 @@ function generateDraftFromPrompt(input) {
   };
 }
 
-function getRecommendations(seedBlogId, limit = 3) {
+async function getRecommendations(seedBlogId, limit = 3) {
   const seedId = Number(seedBlogId);
   const desiredLimit = Math.max(1, Number(limit) || 3);
-  const seedBlog = blogs.find((entry) => entry.id === seedId) || blogs[0] || null;
+  const allBlogs = await prisma.blog.findMany();
+  const seedBlog = allBlogs.find((entry) => entry.id === seedId) || allBlogs[0] || null;
 
   if (!seedBlog) {
     return [];
@@ -211,7 +213,7 @@ function getRecommendations(seedBlogId, limit = 3) {
 
   const seedWords = new Set(normalizeWords(toSearchableText(seedBlog)));
 
-  return blogs
+  return allBlogs
     .filter((entry) => entry.id !== seedBlog.id)
     .map((entry) => {
       const words = normalizeWords(toSearchableText(entry));
@@ -288,7 +290,7 @@ function readBearerToken(req) {
   return authorization.slice("Bearer ".length).trim() || null;
 }
 
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
   const token = readBearerToken(req);
   if (!token) {
     return res.status(401).json({ error: "Missing auth token. Please log in." });
@@ -296,7 +298,7 @@ function requireAuth(req, res, next) {
 
   try {
     const payload = jwt.verify(token, jwtSecret);
-    const user = usersByEmail.get(payload.email);
+    const user = await prisma.user.findUnique({ where: { email: payload.email } });
 
     if (!user) {
       return res.status(401).json({ error: "Session user not found" });
@@ -396,30 +398,33 @@ app.post("/api/auth/signup", (req, res) => {
       .json({ error: "Password must be at least 6 characters long" });
   }
 
-  if (usersByEmail.has(normalizedEmail)) {
-    return res.status(409).json({ error: "Account already exists for this email" });
-  }
+  (async () => {
+    const exists = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (exists) {
+      return res.status(409).json({ error: "Account already exists for this email" });
+    }
 
-  const now = new Date().toISOString();
-  const user = {
-    email: normalizedEmail,
-    name: String(name).trim(),
-    role: selectedRole,
-    picture: "",
-    passwordHash: hashPassword(String(password)),
-    createdAt: now,
-    updatedAt: now,
-  };
+    const now = new Date().toISOString();
+    const user = await prisma.user.create({
+      data: {
+        email: normalizedEmail,
+        name: String(name).trim(),
+        role: selectedRole,
+        picture: "",
+        passwordHash: hashPassword(String(password)),
+        createdAt: now,
+        updatedAt: now,
+      },
+    });
 
-  usersByEmail.set(normalizedEmail, user);
-
-  return res.status(201).json({
-    token: createSessionToken(user),
-    user: serializeUser(user),
+    return res.status(201).json({ token: createSessionToken(user), user: serializeUser(user) });
+  })().catch((err) => {
+    console.error('Signup error', err);
+    return res.status(500).json({ error: 'Could not create account' });
   });
 });
 
-app.post("/api/auth/login", (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body || {};
   const normalizedEmail = String(email || "").trim().toLowerCase();
 
@@ -429,18 +434,20 @@ app.post("/api/auth/login", (req, res) => {
       .json({ error: "Missing required fields. Required: email, password" });
   }
 
-  const user = usersByEmail.get(normalizedEmail);
+  try {
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
 
-  if (!user || !verifyPassword(String(password), user.passwordHash)) {
-    return res.status(401).json({ error: "Invalid email or password" });
+    if (!user || !verifyPassword(String(password), user.passwordHash)) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    await prisma.user.update({ where: { email: normalizedEmail }, data: { updatedAt: new Date() } });
+
+    return res.json({ token: createSessionToken(user), user: serializeUser(user) });
+  } catch (err) {
+    console.error('Login error', err);
+    return res.status(500).json({ error: 'Login failed' });
   }
-
-  user.updatedAt = new Date().toISOString();
-
-  return res.json({
-    token: createSessionToken(user),
-    user: serializeUser(user),
-  });
 });
 
 app.post("/api/auth/google", (req, res) => {
@@ -453,78 +460,80 @@ app.get("/api/auth/me", requireAuth, (req, res) => {
   res.json({ user: serializeUser(req.user) });
 });
 
-app.get("/api/blogs", (req, res) => {
-  const query = String(req.query.q || "").trim().toLowerCase();
+app.get("/api/blogs", async (req, res) => {
+  const query = String(req.query.q || "").trim();
   const limit = Number(req.query.limit || 0);
 
-  let result = blogs;
-  if (query) {
-    result = blogs.filter((blog) => toSearchableText(blog).includes(query));
-  }
+  try {
+    const where = query
+      ? {
+          OR: [
+            { title: { contains: query, mode: 'insensitive' } },
+            { excerpt: { contains: query, mode: 'insensitive' } },
+            { content: { contains: query, mode: 'insensitive' } },
+          ],
+        }
+      : {};
 
-  if (!Number.isNaN(limit) && limit > 0) {
-    result = result.slice(0, limit);
-  }
+    const items = await prisma.blog.findMany({ where, orderBy: { createdAt: 'desc' }, take: limit > 0 ? limit : undefined });
 
-  res.json({
-    count: result.length,
-    items: result,
-  });
+    res.json({ count: items.length, items });
+  } catch (err) {
+    console.error('Get blogs error', err);
+    res.status(500).json({ error: 'Failed to load blogs' });
+  }
 });
 
-app.get("/api/blogs/:id", (req, res) => {
+app.get("/api/blogs/:id", async (req, res) => {
   const id = Number(req.params.id);
-  const blog = blogs.find((entry) => entry.id === id);
-
-  if (!blog) {
-    return res.status(404).json({ error: "Blog not found" });
+  try {
+    const blog = await prisma.blog.findUnique({ where: { id } });
+    if (!blog) {
+      return res.status(404).json({ error: "Blog not found" });
+    }
+    return res.json(blog);
+  } catch (err) {
+    console.error('Get blog by id error', err);
+    return res.status(500).json({ error: 'Failed to load blog' });
   }
-
-  return res.json(blog);
 });
 
-app.get("/api/drops", (req, res) => {
+app.get("/api/drops", async (req, res) => {
   const status = String(req.query.status || "").trim().toLowerCase();
   const limit = Number(req.query.limit || 0);
 
-  let result = drops;
-
-  if (status) {
-    result = result.filter((item) => String(item.status || "").toLowerCase() === status);
+  try {
+    const where = status ? { status: { equals: status, mode: 'insensitive' } } : {};
+    const items = await prisma.drop.findMany({ where, orderBy: { createdAt: 'desc' }, take: limit > 0 ? limit : undefined });
+    res.json({ count: items.length, items });
+  } catch (err) {
+    console.error('Get drops error', err);
+    res.status(500).json({ error: 'Failed to load drops' });
   }
-
-  if (!Number.isNaN(limit) && limit > 0) {
-    result = result.slice(0, limit);
-  }
-
-  res.json({
-    count: result.length,
-    items: result,
-  });
 });
 
-app.get("/api/pages", (req, res) => {
-  const items = Object.values(pages).map((entry) => ({
-    slug: entry.slug,
-    title: entry.title,
-    summary: entry.summary,
-  }));
-
-  res.json({
-    count: items.length,
-    items,
-  });
+app.get("/api/pages", async (req, res) => {
+  try {
+    const items = await prisma.page.findMany({ select: { slug: true, title: true, summary: true }, orderBy: { createdAt: 'asc' } });
+    res.json({ count: items.length, items });
+  } catch (err) {
+    console.error('Get pages error', err);
+    res.status(500).json({ error: 'Failed to load pages' });
+  }
 });
 
-app.get("/api/pages/:slug", (req, res) => {
+app.get("/api/pages/:slug", async (req, res) => {
   const slug = String(req.params.slug || "").trim().toLowerCase();
-  const page = pages[slug];
-
-  if (!page) {
-    return res.status(404).json({ error: "Page not found" });
+  try {
+    const page = await prisma.page.findUnique({ where: { slug } });
+    if (!page) {
+      return res.status(404).json({ error: "Page not found" });
+    }
+    return res.json(page);
+  } catch (err) {
+    console.error('Get page error', err);
+    return res.status(500).json({ error: 'Failed to load page' });
   }
-
-  return res.json(page);
 });
 
 app.post("/api/ai/generate-draft", requireAuth, requireWriterRole, (req, res) => {
@@ -561,92 +570,99 @@ app.post("/api/ai/summarize", (req, res) => {
   });
 });
 
-app.get("/api/ai/recommendations", (req, res) => {
+app.get("/api/ai/recommendations", async (req, res) => {
   const seedId = Number(req.query.seedId || 0);
   const limit = Number(req.query.limit || 3);
-  const items = getRecommendations(seedId, limit);
-
-  res.json({
-    count: items.length,
-    items,
-  });
+  try {
+    const items = await getRecommendations(seedId, limit);
+    res.json({ count: items.length, items });
+  } catch (err) {
+    console.error('Recommendations error', err);
+    res.status(500).json({ error: 'Failed to compute recommendations' });
+  }
 });
 
-app.post("/api/blogs", requireAuth, requireWriterRole, (req, res) => {
+app.post("/api/blogs", requireAuth, requireWriterRole, async (req, res) => {
   const validation = validateBlogPayload(req.body || {});
   if (validation.error) {
     return res.status(400).json({ error: validation.error });
   }
 
   const { title, category, image, excerpt, content } = validation.value;
-
-  const nextId = blogs.reduce((maxId, blog) => Math.max(maxId, blog.id), 0) + 1;
-  const createdBlog = {
-    id: nextId,
-    title,
-    category,
-    author: req.user.name || req.user.email,
-    createdByEmail: req.user.email,
-    image,
-    excerpt,
-    content,
-    date: new Date().toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }),
-  };
-
-  blogs.unshift(createdBlog);
-  return res.status(201).json(createdBlog);
-});
-
-app.put("/api/blogs/:id", requireAuth, requireWriterRole, (req, res) => {
-  const id = Number(req.params.id);
-  const targetBlog = blogs.find((entry) => entry.id === id);
-
-  if (!targetBlog) {
-    return res.status(404).json({ error: "Blog not found" });
-  }
-
-  if (!canManageBlog(req.user, targetBlog)) {
-    return res.status(403).json({
-      error: "You can only edit blogs you created unless you are an administrator",
+  try {
+    const created = await prisma.blog.create({
+      data: {
+        title,
+        category,
+        author: req.user.name || req.user.email,
+        createdByEmail: req.user.email,
+        image,
+        excerpt,
+        content,
+        date: new Date().toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
+      },
     });
+
+    return res.status(201).json(created);
+  } catch (err) {
+    console.error('Create blog error', err);
+    res.status(500).json({ error: 'Failed to create blog' });
   }
-
-  const validation = validateBlogPayload(req.body || {});
-  if (validation.error) {
-    return res.status(400).json({ error: validation.error });
-  }
-
-  targetBlog.title = validation.value.title;
-  targetBlog.category = validation.value.category;
-  targetBlog.image = validation.value.image;
-  targetBlog.excerpt = validation.value.excerpt;
-  targetBlog.content = validation.value.content;
-  targetBlog.author = req.user.name || req.user.email;
-  targetBlog.createdByEmail = targetBlog.createdByEmail || req.user.email;
-  targetBlog.date = new Date().toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
-  return res.json(targetBlog);
 });
 
-app.delete("/api/blogs/:id", requireAuth, requireAdministrator, (req, res) => {
+app.put("/api/blogs/:id", requireAuth, requireWriterRole, async (req, res) => {
   const id = Number(req.params.id);
-  const targetBlog = blogs.find((entry) => entry.id === id);
+  try {
+    const targetBlog = await prisma.blog.findUnique({ where: { id } });
+    if (!targetBlog) {
+      return res.status(404).json({ error: "Blog not found" });
+    }
 
-  if (!targetBlog) {
-    return res.status(404).json({ error: "Blog not found" });
+    if (!canManageBlog(req.user, targetBlog)) {
+      return res.status(403).json({ error: "You can only edit blogs you created unless you are an administrator" });
+    }
+
+    const validation = validateBlogPayload(req.body || {});
+    if (validation.error) {
+      return res.status(400).json({ error: validation.error });
+    }
+
+    const updated = await prisma.blog.update({ where: { id }, data: {
+      title: validation.value.title,
+      category: validation.value.category,
+      image: validation.value.image,
+      excerpt: validation.value.excerpt,
+      content: validation.value.content,
+      author: req.user.name || req.user.email,
+      createdByEmail: targetBlog.createdByEmail || req.user.email,
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+    }});
+
+    return res.json(updated);
+  } catch (err) {
+    console.error('Update blog error', err);
+    res.status(500).json({ error: 'Failed to update blog' });
   }
+});
 
-  const removeIndex = blogs.findIndex((entry) => entry.id === id);
-  blogs.splice(removeIndex, 1);
-  return res.status(204).send();
+app.delete("/api/blogs/:id", requireAuth, requireAdministrator, async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    const targetBlog = await prisma.blog.findUnique({ where: { id } });
+    if (!targetBlog) {
+      return res.status(404).json({ error: "Blog not found" });
+    }
+
+    await prisma.blog.delete({ where: { id } });
+    return res.status(204).send();
+  } catch (err) {
+    console.error('Delete blog error', err);
+    res.status(500).json({ error: 'Failed to delete blog' });
+  }
 });
 
 app.use(express.static(frontendDir));
