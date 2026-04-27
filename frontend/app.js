@@ -2,7 +2,7 @@ const { useEffect, useMemo, useState } = React;
 
 const INFO_LINKS = [
   { slug: "help-center", label: "Help Center" },
-  { slug: "publishing-guide", label: "Publishing Guide" },
+  { slug: "publishing-guide", label: "Lookbook Guide" },
   { slug: "video-tutorials", label: "Video Tutorials" },
   { slug: "terms-of-service", label: "Terms of Service" },
   { slug: "privacy", label: "Privacy" },
@@ -14,7 +14,7 @@ const FALLBACK_PAGES = {
     slug: "help-center",
     title: "Help Center",
     summary:
-      "Find quick answers for publishing, account settings, and troubleshooting common issues.",
+      "Find quick answers for orders, sizing, shipping, and account support.",
     sections: [
       {
         heading: "Getting Started",
@@ -28,9 +28,9 @@ const FALLBACK_PAGES = {
   },
   "publishing-guide": {
     slug: "publishing-guide",
-    title: "Publishing Guide",
+    title: "Lookbook Guide",
     summary:
-      "Learn the editorial workflow used by top creators to ship quality stories consistently.",
+      "Learn how to style, shoot, and publish pieces like a modern digital lookbook.",
     sections: [
       {
         heading: "Drafting",
@@ -112,6 +112,10 @@ function parseRouteFromHash(hashValue) {
     return { view: "login", slug: null };
   }
 
+  if (normalizedHash === "/admin" || normalizedHash.startsWith("/admin/")) {
+    return { view: "admin", slug: null };
+  }
+
   if (normalizedHash.startsWith("/page/")) {
     const slug = normalizedHash.slice("/page/".length).trim().toLowerCase();
     if (slug) {
@@ -141,112 +145,167 @@ function resolveApiBaseUrl() {
 const FALLBACK_BLOGS = [
   {
     id: 1,
-    title: "Building a Calm Morning Writing Ritual",
-    category: "Productivity",
-    author: "Nina Parker",
+    title: "How To Build A 3-Fit Capsule For College Weeks",
+    category: "Style Guides",
+    author: "Rhea Collins",
     date: "Apr 1, 2026",
-    image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80",
+    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80",
     excerpt:
-      "A practical routine for makers who want focused mornings without burning out by noon.",
+      "One jacket, one oversized tee, one statement pair of pants. Minimal pieces, maximum outfit combos.",
     content:
-      "Start with one non-negotiable page. The point is not brilliance, it is momentum. Keep your phone in another room, set a 20-minute timer, and write before checking messages. Over time, that short block compounds into finished essays, product docs, and ideas that become projects.",
+      "A smart campus wardrobe starts with repeatable silhouettes. Pick one outer layer that works with everything, then rotate base tees and cargos in neutral tones. Add one loud accessory each day to make the fit feel fresh without buying a full new closet.",
   },
   {
     id: 2,
-    title: "Design Systems for Tiny Teams",
-    category: "Design",
-    author: "Arjun Bose",
+    title: "The Drop Calendar Playbook For Small Clothing Brands",
+    category: "Brand Ops",
+    author: "Ishaan Gupta",
     date: "Mar 28, 2026",
-    image: "https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=1200&q=80",
+    image: "https://images.unsplash.com/photo-1556906781-9a412961c28c?auto=format&fit=crop&w=1200&q=80",
     excerpt:
-      "How to create visual consistency when you only have one designer and two developers.",
+      "A clean system for planning teasers, launch day, and post-drop storytelling without chaos.",
     content:
-      "Start with foundations: color tokens, type scales, and spacing rules. Document these in a living style guide before creating component variants. A small but strict system beats a huge but ignored one. Pair each component with usage constraints so implementation decisions stay predictable.",
+      "Great drops are paced, not rushed. Use a three-phase cadence: tease, reveal, release. Week one builds intrigue, week two highlights fabrics and fit, and week three is for conversion content plus creator styling clips. This keeps attention steady and improves sell-through.",
   },
   {
     id: 3,
-    title: "Debugging JavaScript Without Guesswork",
-    category: "Development",
+    title: "Streetwear Fit Check: Baggy Vs Relaxed Explained",
+    category: "Fit School",
     author: "Maya Lopez",
     date: "Mar 26, 2026",
-    image: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1200&q=80",
-    excerpt: "A methodical approach to isolate real bugs in half the time.",
+    image: "https://images.unsplash.com/photo-1487222477894-8943e31ef7b2?auto=format&fit=crop&w=1200&q=80",
+    excerpt: "The visual difference is subtle, but the vibe is completely different.",
     content:
-      "The process is simple: reproduce, reduce, inspect, verify. Reproduce the issue with a clear sequence, reduce the test case, inspect state transitions, and verify with one targeted fix. This avoids random edits and protects confidence in your codebase.",
+      "Baggy fit adds volume through the leg and creates a loose, skater-inspired silhouette. Relaxed fit gives extra room while keeping shape cleaner at the hem. Match baggy bottoms with cropped tops for balance; pair relaxed denim with oversized hoodies for daily wear comfort.",
   },
   {
     id: 4,
-    title: "What Readers Actually Remember",
-    category: "Writing",
+    title: "Color Theory For Outfits: 3 Safe Pairings That Always Hit",
+    category: "Style Guides",
     author: "Liam Chen",
     date: "Mar 21, 2026",
-    image: "https://images.unsplash.com/photo-1473755504818-b72b6dfdc226?auto=format&fit=crop&w=1200&q=80",
+    image: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=80",
     excerpt:
-      "Structure beats clever lines. Here is how to make your message stick.",
+      "Build clean looks faster with pairings that work in photos and in real life.",
     content:
-      "Readers remember a clear promise, one compelling example, and a satisfying close. Keep paragraphs short, transition cleanly, and avoid introducing new ideas in the conclusion. Good writing is less about decoration and more about sequence.",
+      "Start with tonal neutrals like black, graphite, and stone for an elevated base. Add one highlight color such as cobalt, olive, or rust through sneakers or a cap. Keep logos minimal when colors are loud so the outfit feels intentional instead of busy.",
   },
   {
     id: 5,
-    title: "How We Ship Features Weekly",
-    category: "Product",
+    title: "Behind The Scenes: From Fabric Roll To Finished Hoodie",
+    category: "Manufacturing",
     author: "Sara West",
     date: "Mar 18, 2026",
-    image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1200&q=80",
+    image: "https://images.unsplash.com/photo-1521223890158-f9f7c3d5d504?auto=format&fit=crop&w=1200&q=80",
     excerpt:
-      "Inside a lightweight planning workflow for fast-moving product teams.",
+      "Why GSM, stitch density, and wash treatment matter more than hype captions.",
     content:
-      "Every Monday we lock scope, every Wednesday we demo internally, every Friday we release small and learn. The framework is strict but tiny. The clarity reduces context switching and keeps quality stable.",
+      "Premium hoodies begin with fabric selection, but finish quality defines the product. Double-needle stitching at stress points, pre-shrunk cotton blends, and consistent panel cutting all impact comfort and shape retention. Great basics are engineered, not improvised.",
   },
   {
     id: 6,
-    title: "A Better Way to Take Study Notes",
-    category: "Learning",
+    title: "Care Guide: Keep Your Graphic Tees Fresh For 50+ Wears",
+    category: "Care",
     author: "Daniel Reed",
     date: "Mar 13, 2026",
-    image: "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=1200&q=80",
+    image: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=1200&q=80",
     excerpt:
-      "Use layered notes to move from passive reading to active recall.",
+      "Simple wash and dry rules that protect print quality and prevent color fade.",
     content:
-      "Layer 1 captures facts. Layer 2 summarizes in your own words. Layer 3 tests memory with questions. This turns notes into a spaced-learning asset rather than archived text you never revisit.",
+      "Wash graphic tees inside out using cold water and mild detergent. Avoid high-heat drying because it cracks prints and shrinks necklines. Air-dry on flat surfaces when possible, then fold instead of hanging to keep shoulder seams from stretching.",
   },
   {
     id: 7,
-    title: "Content SEO in 2026: Practical Checklist",
-    category: "Marketing",
+    title: "How Fashion Creators Build Viral Outfit Reels",
+    category: "Content",
     author: "Olivia White",
     date: "Mar 10, 2026",
-    image: "https://images.unsplash.com/photo-1432888622747-4eb9a8efeb07?auto=format&fit=crop&w=1200&q=80",
+    image: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&q=80",
     excerpt:
-      "Improve discoverability without stuffing keywords or writing for bots.",
+      "A repeatable format for transitions, hooks, and music timing that boosts saves.",
     content:
-      "Clarify search intent first. Then align title, intro, section labels, and metadata with that intent. Use examples and plain language. Search engines reward relevance, structure, and reader satisfaction over keyword repetition.",
+      "Start with a strong first frame showing the final fit, then rewind to the base layer for the transition story. Keep cuts tight, use beat-synced swaps, and add on-screen text for item names. The easier the look is to recreate, the higher the share rate.",
   },
   {
     id: 8,
-    title: "The Minimal Portfolio Formula",
-    category: "Career",
+    title: "Sneaker Rotation 101: Daily, Clean, And Statement Pairs",
+    category: "Footwear",
     author: "Noah Kim",
     date: "Mar 7, 2026",
-    image: "https://images.unsplash.com/photo-1497215842964-222b430dc094?auto=format&fit=crop&w=1200&q=80",
+    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80",
     excerpt:
-      "How to present your work so hiring teams instantly understand your value.",
+      "A 3-pair strategy that covers errands, campus, and night events without overbuying.",
     content:
-      "Focus on outcomes, not tools. Each project should show context, constraints, and impact. Keep visual noise low and make the next action obvious. A focused portfolio is easier to trust than a crowded one.",
+      "Use one neutral everyday sneaker for utility, one easy-clean pair for heavy use, and one statement pair for standout looks. Rotate between pairs to extend outsole life and maintain shape. Consistent cleaning routines keep white midsoles from yellowing.",
   },
   {
     id: 9,
-    title: "Running Effective Async Standups",
-    category: "Teamwork",
+    title: "Pop-Up Shop Checklist For First-Time Brand Owners",
+    category: "Retail",
     author: "Priya Shah",
     date: "Mar 2, 2026",
-    image: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80",
+    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80",
     excerpt:
-      "A no-meeting format that still preserves accountability and alignment.",
+      "The essentials for venue flow, inventory rails, and checkout speed on launch day.",
     content:
-      "Great async standups capture progress, blockers, and plans in one place. Keep updates brief and decision-focused. Add one thread for risks and one for wins. The rhythm creates visibility without calendar overload.",
+      "Design your pop-up path so visitors move from hero pieces to accessories naturally. Keep size runs visible and train staff on fast fit advice. A compact checkout station with clear pricing signage can dramatically reduce drop-day bounce.",
   },
 ];
+
+const FALLBACK_DROPS = [
+  {
+    id: 1,
+    name: "Chrome Pulse Hoodie",
+    category: "Outerwear",
+    price: 89,
+    status: "Live",
+    colorway: "Obsidian / Ice",
+    image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=1200&q=80",
+    tagline: "Heavyweight hoodie with reflective print for late-night city fits.",
+  },
+  {
+    id: 2,
+    name: "Static Drift Cargo",
+    category: "Bottoms",
+    price: 74,
+    status: "Low Stock",
+    colorway: "Sandstorm",
+    image: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=1200&q=80",
+    tagline: "Relaxed cargos with utility pockets and clean taper.",
+  },
+  {
+    id: 3,
+    name: "No Signal Tee",
+    category: "Tops",
+    price: 39,
+    status: "Live",
+    colorway: "Cloud White",
+    image: "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=1200&q=80",
+    tagline: "Oversized everyday tee with soft combed cotton finish.",
+  },
+  {
+    id: 4,
+    name: "Neon Loop Varsity",
+    category: "Outerwear",
+    price: 129,
+    status: "Coming Soon",
+    colorway: "Ink / Neon Lime",
+    image: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1200&q=80",
+    tagline: "Statement varsity for spotlight drops and creator collabs.",
+  },
+];
+
+function getFallbackRecommendations(activeBlogs, desiredLimit = 3) {
+  const items = Array.isArray(activeBlogs) ? activeBlogs : [];
+  if (!items.length) {
+    return [];
+  }
+
+  const seed = items[0];
+  return items
+    .filter((entry) => entry.id !== seed.id)
+    .slice(0, desiredLimit);
+}
 
 function LoginGate({
   authMode,
@@ -338,13 +397,13 @@ function LoginGate({
     <section className={`auth-card ${embedded ? "auth-card-inline" : ""}`}>
       {embedded ? (
         <div className="auth-inline-header">
-          <p className="auth-kicker">Corbin &amp; Hudson</p>
+          <p className="auth-kicker">Corbin &amp; Hudson Street Lab</p>
           <button type="button" className="auth-close" onClick={onClose} aria-label="Close auth panel">
             x
           </button>
         </div>
       ) : (
-        <p className="auth-kicker">Corbin &amp; Hudson</p>
+        <p className="auth-kicker">Corbin &amp; Hudson Street Lab</p>
       )}
         <h1>{authMode === "signup" ? "Create your account" : "Sign in to your account"}</h1>
         <p className="auth-note">
@@ -502,6 +561,7 @@ function AppShell({
   authChecking,
 }) {
   const [blogs, setBlogs] = useState([]);
+  const [drops, setDrops] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [topActionNote, setTopActionNote] = useState("");
   const [route, setRoute] = useState(() => parseRouteFromHash(window.location.hash));
@@ -509,6 +569,19 @@ function AppShell({
   const [isPageLoading, setIsPageLoading] = useState(false);
   const [createError, setCreateError] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState("");
+  const [aiDraftHints, setAiDraftHints] = useState([]);
+  const [aiPrompt, setAiPrompt] = useState({
+    topic: "",
+    tone: "practical",
+    audience: "new creators",
+  });
+  const [aiRecommendations, setAiRecommendations] = useState([]);
+  const [aiSummaryByBlogId, setAiSummaryByBlogId] = useState({});
+  const [aiSummaryLoadingId, setAiSummaryLoadingId] = useState(null);
+  const [deleteBusyId, setDeleteBusyId] = useState(null);
+  const [selectedStory, setSelectedStory] = useState(null);
   const [createForm, setCreateForm] = useState({
     title: "",
     category: "",
@@ -534,6 +607,25 @@ function AppShell({
     }
 
     loadBlogs();
+  }, [apiBaseUrl]);
+
+  useEffect(() => {
+    async function loadDrops() {
+      try {
+        const response = await fetch(`${apiBaseUrl}/drops?limit=4`);
+        if (!response.ok) {
+          throw new Error(`Failed with status ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const items = Array.isArray(payload.items) ? payload.items : [];
+        setDrops(items);
+      } catch (error) {
+        setDrops(FALLBACK_DROPS);
+      }
+    }
+
+    loadDrops();
   }, [apiBaseUrl]);
 
   useEffect(() => {
@@ -590,38 +682,75 @@ function AppShell({
   }, [route.view, user]);
 
   const activeBlogs = blogs.length ? blogs : FALLBACK_BLOGS;
+  const activeDrops = drops.length ? drops : FALLBACK_DROPS;
   const canCreateBlogs = user?.role === "editor" || user?.role === "administrator";
+  const isAdministrator = user?.role === "administrator";
+
+  useEffect(() => {
+    if (!activeBlogs.length) {
+      setAiRecommendations([]);
+      return;
+    }
+
+    async function loadRecommendations() {
+      const seedId = activeBlogs[0]?.id;
+      if (!seedId) {
+        setAiRecommendations(getFallbackRecommendations(activeBlogs, 3));
+        return;
+      }
+
+      try {
+        const response = await fetch(`${apiBaseUrl}/ai/recommendations?seedId=${seedId}&limit=3`);
+        if (!response.ok) {
+          throw new Error(`Failed with status ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const items = Array.isArray(payload.items) ? payload.items : [];
+        if (!items.length) {
+          setAiRecommendations(getFallbackRecommendations(activeBlogs, 3));
+          return;
+        }
+
+        setAiRecommendations(items);
+      } catch (error) {
+        setAiRecommendations(getFallbackRecommendations(activeBlogs, 3));
+      }
+    }
+
+    loadRecommendations();
+  }, [activeBlogs, apiBaseUrl]);
 
   const featureSections = useMemo(() => {
     return [
       {
-        title: "Choose the perfect design",
+        title: "Build Signature Fits",
         description:
-          "Create a beautiful blog that fits your style with flexible layouts and modern storytelling blocks.",
+          "Create statement looks with layered basics, clean silhouettes, and bold finishing pieces.",
         image: activeBlogs[1]?.image || FALLBACK_BLOGS[1].image,
       },
       {
-        title: "Get your own domain",
+        title: "Launch Sharp Drop Pages",
         description:
-          "Give your publication a memorable home and build trust around your voice from day one.",
+          "Turn each collection into a focused launch story with product highlights and styling notes.",
         image: activeBlogs[4]?.image || FALLBACK_BLOGS[4].image,
       },
       {
-        title: "Turn passion into income",
+        title: "Convert Vibe Into Revenue",
         description:
-          "Use sponsor-ready sections, clear calls to action, and premium story placements to grow revenue.",
+          "Use hype windows, fit breakdowns, and creator showcases to move from views to checkouts.",
         image: activeBlogs[6]?.image || FALLBACK_BLOGS[6].image,
       },
       {
-        title: "Know your audience",
+        title: "Track What Actually Sells",
         description:
-          "Track which stories resonate so you can double down on what your readers care about most.",
+          "Read engagement signals and product clicks so your next drop is guided by real demand.",
         image: activeBlogs[8]?.image || FALLBACK_BLOGS[8].image,
       },
       {
-        title: "Keep every memory alive",
+        title: "Archive Your Brand DNA",
         description:
-          "Store long-form stories, visuals, and updates in one flowing archive designed for discovery.",
+          "Keep every drop story, visual campaign, and lookbook in one discoverable timeline.",
         image: activeBlogs[0]?.image || FALLBACK_BLOGS[0].image,
       },
     ];
@@ -630,15 +759,15 @@ function AppShell({
   const storyHighlights = useMemo(() => activeBlogs.slice(0, 3), [activeBlogs]);
 
   const communityStats = [
-    { label: "Active Writers", value: "18k+" },
-    { label: "Stories Published", value: "240k+" },
-    { label: "Monthly Readers", value: "3.2M" },
+    { label: "Style Creators", value: "28k+" },
+    { label: "Fits Shared", value: "410k+" },
+    { label: "Monthly Viewers", value: "5.7M" },
   ];
 
   const communityBenefits = [
-    "Weekly writing circles with live feedback from editors.",
-    "Member showcases that feature rising creators every Friday.",
-    "A private forum for collaboration, partnerships, and growth tips.",
+    "Weekly look critiques with feedback from stylists and creators.",
+    "Friday creator spotlights that feature breakout streetwear voices.",
+    "A private crew space for collabs, pop-up events, and growth tactics.",
   ];
 
   const helpLinks = INFO_LINKS.filter((item) =>
@@ -650,6 +779,7 @@ function AppShell({
 
   const showLoginPage = route.view === "login";
   const showInfoPage = route.view === "page";
+  const showAdminPage = route.view === "admin";
 
   function handleTopLoginClick() {
     if (user) {
@@ -729,6 +859,142 @@ function AppShell({
     }
   }
 
+  async function handleGenerateDraftWithAI() {
+    if (!aiPrompt.topic.trim()) {
+      setAiError("Add a topic first so AI can draft the blog.");
+      return;
+    }
+
+    setAiBusy(true);
+    setAiError("");
+    setAiDraftHints([]);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/ai/generate-draft`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(aiPrompt),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.error || "Unable to generate draft");
+      }
+
+      const draft = payload.draft || {};
+      setCreateForm((prev) => ({
+        ...prev,
+        title: draft.title || prev.title,
+        category: draft.category || prev.category,
+        image: draft.image || prev.image,
+        excerpt: draft.excerpt || prev.excerpt,
+        content: draft.content || prev.content,
+      }));
+      setAiDraftHints(Array.isArray(draft.keywords) ? draft.keywords : []);
+    } catch (error) {
+      setAiError(error.message || "Unable to generate draft");
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  async function handleCreateStorySummary(story) {
+    if (!story?.id || !story?.content) {
+      return;
+    }
+
+    if (aiSummaryByBlogId[story.id]) {
+      setAiSummaryByBlogId((prev) => {
+        const next = { ...prev };
+        delete next[story.id];
+        return next;
+      });
+      return;
+    }
+
+    setAiSummaryLoadingId(story.id);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/ai/summarize`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: story.content }),
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to summarize story");
+      }
+
+      setAiSummaryByBlogId((prev) => ({
+        ...prev,
+        [story.id]: {
+          summary: payload.summary || "",
+          bulletPoints: Array.isArray(payload.bulletPoints) ? payload.bulletPoints : [],
+          keywords: Array.isArray(payload.keywords) ? payload.keywords : [],
+          readingTimeMinutes: payload.readingTimeMinutes || 1,
+        },
+      }));
+    } catch (error) {
+      setTopActionNote(error.message || "Failed to summarize story");
+    } finally {
+      setAiSummaryLoadingId(null);
+    }
+  }
+
+  async function handleDeleteBlog(story) {
+    if (!story?.id || !isAdministrator) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete \"${story.title}\"? This action cannot be undone.`);
+    if (!confirmed) {
+      return;
+    }
+
+    setDeleteBusyId(story.id);
+    setTopActionNote("");
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/blogs/${story.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Failed to delete blog");
+      }
+
+      setBlogs((prev) => prev.filter((entry) => entry.id !== story.id));
+      setAiSummaryByBlogId((prev) => {
+        const next = { ...prev };
+        delete next[story.id];
+        return next;
+      });
+      setTopActionNote("Blog deleted successfully.");
+    } catch (error) {
+      setTopActionNote(error.message || "Failed to delete blog");
+    } finally {
+      setDeleteBusyId(null);
+    }
+  }
+
+  function handleViewStory(story) {
+    if (!story) {
+      return;
+    }
+
+    setSelectedStory(story);
+  }
+
   if (showLoginPage) {
     return (
       <main className="page-wrap auth-page-wrap">
@@ -737,7 +1003,7 @@ function AppShell({
             <span className="brand-monogram">C&amp;H</span>
             <span className="brand-text-group">
               <span className="brand-name">Corbin &amp; Hudson</span>
-              <span className="brand-tag">Story House</span>
+              <span className="brand-tag">Street Lab</span>
             </span>
           </a>
           <a href="#/" className="auth-back-link">
@@ -771,13 +1037,15 @@ function AppShell({
           <span className="brand-monogram">C&amp;H</span>
           <span className="brand-text-group">
             <span className="brand-name">Corbin &amp; Hudson</span>
-            <span className="brand-tag">Story House</span>
+              <span className="brand-tag">Street Lab</span>
           </span>
         </a>
         <nav className="top-links" aria-label="Primary">
           <a href="#features">Features</a>
-          <a href="#stories">Stories</a>
-          <a href="#community">Community</a>
+          <a href="#drops">Drops</a>
+          <a href="#stories">Journal</a>
+          <a href="#community">Crew</a>
+          {isAdministrator ? <a href="#/admin" className="admin-link">Admin Studio</a> : null}
         </nav>
         <div className="top-auth-controls">
           <button type="button" className="auth-top-btn" onClick={handleTopLoginClick}>
@@ -807,7 +1075,7 @@ function AppShell({
             <div className="create-modal-header">
               <div>
                 <h3>Create Blog</h3>
-                <p>Signed in as {user.role}. Publish directly to your homepage stories feed.</p>
+                <p>Signed in as {user.role}. Publish directly to your style journal feed.</p>
               </div>
               <button
                 type="button"
@@ -819,56 +1087,248 @@ function AppShell({
               </button>
             </div>
             <form className="blog-form" onSubmit={handleCreateBlog}>
-              <input
-                type="text"
-                placeholder="Blog title"
-                value={createForm.title}
-                onChange={(event) =>
-                  setCreateForm((prev) => ({ ...prev, title: event.target.value }))
-                }
-              />
-              <input
-                type="text"
-                placeholder="Category"
-                value={createForm.category}
-                onChange={(event) =>
-                  setCreateForm((prev) => ({ ...prev, category: event.target.value }))
-                }
-              />
-              <input
-                type="url"
-                placeholder="Cover image URL"
-                value={createForm.image}
-                onChange={(event) =>
-                  setCreateForm((prev) => ({ ...prev, image: event.target.value }))
-                }
-              />
-              <textarea
-                placeholder="Short excerpt"
-                rows="3"
-                value={createForm.excerpt}
-                onChange={(event) =>
-                  setCreateForm((prev) => ({ ...prev, excerpt: event.target.value }))
-                }
-              />
-              <textarea
-                placeholder="Full content"
-                rows="5"
-                value={createForm.content}
-                onChange={(event) =>
-                  setCreateForm((prev) => ({ ...prev, content: event.target.value }))
-                }
-              />
+              <div className="ai-helper-panel">
+                <div className="ai-helper-head">
+                  <div>
+                    <p className="ai-helper-kicker">AI Studio</p>
+                    <h4>Draft Assistant</h4>
+                  </div>
+                  <span className="ai-helper-chip">Creative Mode</span>
+                </div>
+                <p>Describe your idea and let AI prepare a polished first draft with title, category, excerpt, content, and cover image.</p>
+                <label htmlFor="ai-topic" className="field-label">Topic</label>
+                <input
+                  id="ai-topic"
+                  type="text"
+                  placeholder="For example: email marketing for indie makers"
+                  value={aiPrompt.topic}
+                  onChange={(event) =>
+                    setAiPrompt((prev) => ({ ...prev, topic: event.target.value }))
+                  }
+                />
+                <div className="ai-helper-grid">
+                  <div>
+                    <label htmlFor="ai-tone" className="field-label">Tone</label>
+                    <select
+                      id="ai-tone"
+                      value={aiPrompt.tone}
+                      onChange={(event) =>
+                        setAiPrompt((prev) => ({ ...prev, tone: event.target.value }))
+                      }
+                    >
+                      <option value="practical">Practical</option>
+                      <option value="clear">Clear</option>
+                      <option value="friendly">Friendly</option>
+                      <option value="bold">Bold</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="ai-audience" className="field-label">Audience</label>
+                    <input
+                      id="ai-audience"
+                      type="text"
+                      placeholder="Audience"
+                      value={aiPrompt.audience}
+                      onChange={(event) =>
+                        setAiPrompt((prev) => ({ ...prev, audience: event.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="ai-helper-actions">
+                  <button type="button" className="ai-generate-btn" onClick={handleGenerateDraftWithAI} disabled={aiBusy}>
+                    {aiBusy ? "Generating draft..." : "Generate With AI"}
+                  </button>
+                  <p className="ai-helper-tip">Tip: use a specific topic to get sharper output.</p>
+                </div>
+                {aiDraftHints.length ? (
+                  <p className="ai-hints">Suggested keywords: {aiDraftHints.join(", ")}</p>
+                ) : null}
+                {aiError ? <p className="auth-error">{aiError}</p> : null}
+              </div>
+
+              <section className="editor-panel">
+                <div className="editor-panel-head">
+                  <h4>Story Editor</h4>
+                  <span>Refine before publishing</span>
+                </div>
+
+                <div className="editor-grid">
+                  <label className="editor-field">
+                    <span className="field-label">Blog Title</span>
+                    <input
+                      type="text"
+                      placeholder="Blog title"
+                      value={createForm.title}
+                      onChange={(event) =>
+                        setCreateForm((prev) => ({ ...prev, title: event.target.value }))
+                      }
+                    />
+                  </label>
+
+                  <label className="editor-field">
+                    <span className="field-label">Category</span>
+                    <input
+                      type="text"
+                      placeholder="Category"
+                      value={createForm.category}
+                      onChange={(event) =>
+                        setCreateForm((prev) => ({ ...prev, category: event.target.value }))
+                      }
+                    />
+                  </label>
+
+                  <label className="editor-field full-span">
+                    <span className="field-label">Cover Image URL</span>
+                    <input
+                      type="url"
+                      placeholder="Cover image URL"
+                      value={createForm.image}
+                      onChange={(event) =>
+                        setCreateForm((prev) => ({ ...prev, image: event.target.value }))
+                      }
+                    />
+                  </label>
+
+                  {createForm.image ? (
+                    <div className="image-preview full-span">
+                      <p className="image-preview-label">Cover Preview</p>
+                      <img src={createForm.image} alt="Cover preview" />
+                    </div>
+                  ) : null}
+
+                  <label className="editor-field full-span">
+                    <span className="field-label">Excerpt</span>
+                    <textarea
+                      placeholder="Short excerpt"
+                      rows="3"
+                      value={createForm.excerpt}
+                      onChange={(event) =>
+                        setCreateForm((prev) => ({ ...prev, excerpt: event.target.value }))
+                      }
+                    />
+                  </label>
+
+                  <label className="editor-field full-span">
+                    <span className="field-label">Full Content</span>
+                    <textarea
+                      placeholder="Full content"
+                      rows="7"
+                      value={createForm.content}
+                      onChange={(event) =>
+                        setCreateForm((prev) => ({ ...prev, content: event.target.value }))
+                      }
+                    />
+                  </label>
+                </div>
+              </section>
+
               {createError ? <p className="auth-error">{createError}</p> : null}
-              <button type="submit" disabled={isCreating}>
-                {isCreating ? "Publishing..." : "Publish Blog"}
-              </button>
+              <div className="blog-form-actions">
+                <button type="submit" disabled={isCreating}>
+                  {isCreating ? "Publishing..." : "Publish Blog"}
+                </button>
+              </div>
             </form>
           </section>
         </div>
       ) : null}
 
-      {showInfoPage ? (
+      {selectedStory ? (
+        <div className="view-modal-overlay" onClick={() => setSelectedStory(null)}>
+          <section className="view-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="view-modal-header">
+              <div>
+                <p className="view-modal-kicker">Story Viewer</p>
+                <h3>{selectedStory.title}</h3>
+                <p className="view-modal-meta">{selectedStory.category} · {selectedStory.author} · {selectedStory.date}</p>
+              </div>
+              <button
+                type="button"
+                className="auth-close"
+                aria-label="Close story viewer"
+                onClick={() => setSelectedStory(null)}
+              >
+                x
+              </button>
+            </div>
+            <img src={selectedStory.image} alt={selectedStory.title} className="view-modal-image" />
+            <p className="view-modal-excerpt">{selectedStory.excerpt}</p>
+            <p className="view-modal-content">{selectedStory.content}</p>
+          </section>
+        </div>
+      ) : null}
+
+      {showAdminPage ? (
+        <section className="admin-page" id="admin-studio">
+          <div className="admin-page-head">
+            <div>
+              <p className="admin-kicker">Administrator Control Center</p>
+              <h1>Blog Operations Studio</h1>
+              <p className="admin-summary">
+                Monitor style posts, preview quickly, and remove any journal entry from one workspace.
+              </p>
+            </div>
+            <a href="#/" className="back-link">&larr; Back to Home</a>
+          </div>
+
+          {isAdministrator ? (
+            <>
+              <div className="admin-stats-grid">
+                <article className="admin-stat-card">
+                  <p className="admin-stat-value">{activeBlogs.length}</p>
+                  <p className="admin-stat-label">Total Blogs</p>
+                </article>
+                <article className="admin-stat-card">
+                  <p className="admin-stat-value">{new Set(activeBlogs.map((blog) => blog.author)).size}</p>
+                  <p className="admin-stat-label">Active Authors</p>
+                </article>
+                <article className="admin-stat-card">
+                  <p className="admin-stat-value">{new Set(activeBlogs.map((blog) => blog.category)).size}</p>
+                  <p className="admin-stat-label">Categories</p>
+                </article>
+              </div>
+
+              <div className="admin-blog-grid">
+                {activeBlogs.map((story) => (
+                  <article className="admin-blog-card" key={`admin-${story.id}`}>
+                    <img src={story.image} alt={story.title} className="admin-blog-image" />
+                    <div className="admin-blog-body">
+                      <p className="story-meta">{story.category} · {story.date}</p>
+                      <h3>{story.title}</h3>
+                      <p>{story.excerpt}</p>
+                      <div className="admin-blog-actions">
+                        <button
+                          type="button"
+                          className="story-view-btn"
+                          onClick={() => handleViewStory(story)}
+                        >
+                          View Story
+                        </button>
+                        <button
+                          type="button"
+                          className="story-delete-btn"
+                          onClick={() => handleDeleteBlog(story)}
+                          disabled={deleteBusyId === story.id}
+                        >
+                          {deleteBusyId === story.id ? "Removing..." : "Remove Blog"}
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="admin-locked-card">
+              <h3>Administrator access required</h3>
+              <p>
+                This page is restricted. Sign in with an administrator account to manage and remove blogs.
+              </p>
+            </div>
+          )}
+        </section>
+      ) : showInfoPage ? (
         <section className="info-page" id="community">
           <a href="#/" className="back-link">&larr; Back to Home</a>
           {isPageLoading && <p className="info-meta">Loading page content...</p>}
@@ -911,18 +1371,41 @@ function AppShell({
             ))}
           </section>
 
+          <section className="drops-section" id="drops">
+            <div className="section-head">
+              <h3>Latest Drops</h3>
+              <p>Fresh pieces from the current lineup. Built for daily wear, shot for social.</p>
+            </div>
+            <div className="drops-grid">
+              {activeDrops.map((drop) => (
+                <article className="drop-card" key={`drop-${drop.id}`}>
+                  <img src={drop.image} alt={drop.name} className="drop-image" />
+                  <div className="drop-body">
+                    <p className="drop-topline">
+                      <span>{drop.category}</span>
+                      <span>{drop.status}</span>
+                    </p>
+                    <h4>{drop.name}</h4>
+                    <p>{drop.tagline}</p>
+                    <p className="drop-meta">{drop.colorway} · ${drop.price}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+
           <section className="long-section">
-            <h3>Join thousands of creators publishing with Corbin &amp; Hudson</h3>
+            <h3>Join creators building style culture with Corbin &amp; Hudson</h3>
             <p>
-              Whether you write tutorials, news, or personal journals, this platform gives you a clean
-              publishing workflow and modern storytelling format from your very first post.
+              Whether you run a clothing label or share daily outfit content, this platform gives you a
+              fast content workflow with launch-ready storytelling from your first post.
             </p>
           </section>
 
           <section className="stories-section" id="stories">
             <div className="section-head">
               <h3>Stories</h3>
-              <p>Popular reads from creators building momentum this month.</p>
+              <p>Popular reads from creators shaping fashion conversations this month.</p>
             </div>
             <div className="stories-grid">
               {storyHighlights.map((story) => (
@@ -932,6 +1415,73 @@ function AppShell({
                     <p className="story-meta">{story.category} · {story.date}</p>
                     <h4>{story.title}</h4>
                     <p>{story.excerpt}</p>
+                    <div className="story-card-actions">
+                      <button
+                        type="button"
+                        className="story-view-btn"
+                        onClick={() => handleViewStory(story)}
+                      >
+                        View Story
+                      </button>
+                      <button
+                        type="button"
+                        className="story-ai-btn"
+                        onClick={() => handleCreateStorySummary(story)}
+                        disabled={aiSummaryLoadingId === story.id}
+                      >
+                        {aiSummaryLoadingId === story.id
+                          ? "Summarizing..."
+                          : aiSummaryByBlogId[story.id]
+                          ? "Hide AI Summary"
+                          : "AI Summary"}
+                      </button>
+                      {isAdministrator ? (
+                        <button
+                          type="button"
+                          className="story-delete-btn"
+                          onClick={() => handleDeleteBlog(story)}
+                          disabled={deleteBusyId === story.id}
+                        >
+                          {deleteBusyId === story.id ? "Deleting..." : "Delete"}
+                        </button>
+                      ) : null}
+                    </div>
+                    {aiSummaryByBlogId[story.id] ? (
+                      <div className="story-ai-summary">
+                        <p>{aiSummaryByBlogId[story.id].summary}</p>
+                        <p className="story-ai-meta">
+                          {aiSummaryByBlogId[story.id].readingTimeMinutes} min read · {aiSummaryByBlogId[story.id].keywords.join(", ")}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="stories-section" id="ai-picks">
+            <div className="section-head">
+              <h3>AI Picks For You</h3>
+              <p>Recommended reads based on your current style interests.</p>
+            </div>
+            <div className="stories-grid">
+              {aiRecommendations.map((story) => (
+                <article className="story-card" key={`ai-${story.id}`}>
+                  <img src={story.image} alt={story.title} className="story-image" />
+                  <div className="story-body">
+                    <p className="story-meta">{story.category} · {story.date}</p>
+                    <h4>{story.title}</h4>
+                    <p>{story.excerpt}</p>
+                    <div className="story-card-actions">
+                      <button
+                        type="button"
+                        className="story-view-btn"
+                        onClick={() => handleViewStory(story)}
+                      >
+                        View Story
+                      </button>
+                    </div>
                   </div>
                 </article>
               ))}
@@ -941,7 +1491,7 @@ function AppShell({
           <section className="community-section" id="community">
             <div className="section-head">
               <h3>Community</h3>
-              <p>Build your audience with a network that helps creators ship consistently.</p>
+              <p>Build your audience with a crew that helps creators ship consistently.</p>
             </div>
             <div className="community-layout">
               <div className="community-stats">
@@ -970,7 +1520,7 @@ function AppShell({
           <div className="footer-brand-mark">C&amp;H</div>
           <div>
             <div className="footer-brand">Corbin &amp; Hudson</div>
-            <p className="footer-tag">A modern publishing brand for independent creators.</p>
+            <p className="footer-tag">A Gen-Z style journal for creators and clothing brands.</p>
           </div>
         </div>
         <div className="footer-columns">

@@ -5,6 +5,7 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const { blogs } = require("./data/blogs");
 const { pages } = require("./data/pages");
+const { drops } = require("./data/drops");
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
@@ -12,6 +13,34 @@ const jwtSecret = process.env.JWT_SECRET || "dev-only-change-me";
 const roleSet = new Set(["reader", "editor", "administrator"]);
 const writerRoleSet = new Set(["editor", "administrator"]);
 const usersByEmail = new Map();
+const stopWordSet = new Set([
+  "a",
+  "an",
+  "and",
+  "are",
+  "as",
+  "at",
+  "be",
+  "by",
+  "for",
+  "from",
+  "how",
+  "in",
+  "is",
+  "it",
+  "of",
+  "on",
+  "or",
+  "that",
+  "the",
+  "this",
+  "to",
+  "was",
+  "we",
+  "with",
+  "you",
+  "your",
+]);
 
 app.use(cors());
 app.use(express.json());
@@ -22,6 +51,181 @@ function toSearchableText(blog) {
   return [blog.title, blog.excerpt, blog.content, blog.category, blog.author]
     .join(" ")
     .toLowerCase();
+}
+
+function normalizeWords(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((word) => word.length > 2 && !stopWordSet.has(word));
+}
+
+function extractKeywords(text, limit = 6) {
+  const words = normalizeWords(text);
+  const counts = new Map();
+
+  for (const word of words) {
+    counts.set(word, (counts.get(word) || 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, Math.max(1, Number(limit) || 6))
+    .map(([word]) => word);
+}
+
+function estimateReadingTime(text) {
+  const words = String(text || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+  return Math.max(1, Math.round(words / 200));
+}
+
+function splitSentences(text) {
+  return String(text || "")
+    .replace(/\s+/g, " ")
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+}
+
+function summarizeText(text, maxSentences = 2) {
+  const cleanText = String(text || "").trim();
+  const sentences = splitSentences(cleanText);
+
+  if (!sentences.length) {
+    return { summary: "", bulletPoints: [] };
+  }
+
+  if (sentences.length <= maxSentences) {
+    return {
+      summary: sentences.join(" "),
+      bulletPoints: sentences.map((sentence) => sentence.replace(/[.!?]+$/, "")),
+    };
+  }
+
+  const topKeywords = extractKeywords(cleanText, 8);
+  const scored = sentences.map((sentence, index) => {
+    const sentenceWords = normalizeWords(sentence);
+    const score = sentenceWords.reduce((total, word) => {
+      return total + (topKeywords.includes(word) ? 1 : 0);
+    }, 0);
+
+    return { index, sentence, score };
+  });
+
+  const selected = scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, Math.max(1, maxSentences))
+    .sort((a, b) => a.index - b.index)
+    .map((entry) => entry.sentence);
+
+  return {
+    summary: selected.join(" "),
+    bulletPoints: selected.map((sentence) => sentence.replace(/[.!?]+$/, "")),
+  };
+}
+
+function buildCategoryFromTopic(topic) {
+  const normalizedTopic = String(topic || "").toLowerCase();
+
+  if (normalizedTopic.includes("hoodie") || normalizedTopic.includes("jacket")) {
+    return "Outerwear";
+  }
+
+  if (normalizedTopic.includes("tee") || normalizedTopic.includes("shirt")) {
+    return "Tops";
+  }
+
+  if (normalizedTopic.includes("cargo") || normalizedTopic.includes("denim") || normalizedTopic.includes("pants")) {
+    return "Bottoms";
+  }
+
+  if (normalizedTopic.includes("sneaker") || normalizedTopic.includes("shoe")) {
+    return "Footwear";
+  }
+
+  return "Style Guides";
+}
+
+function buildTitleFromTopic(topic, tone) {
+  const trimmedTopic = String(topic || "").trim();
+  const normalizedTone = String(tone || "clear").trim().toLowerCase();
+  const toneMap = {
+    clear: "Clean Style Guide:",
+    friendly: "Weekend Fit Ideas:",
+    bold: "Streetwear Playbook:",
+    practical: "How To Style:",
+  };
+
+  const prefix = toneMap[normalizedTone] || "Drop Guide:";
+  return `${prefix} ${trimmedTopic}`;
+}
+
+function buildCoverImageUrl(topic, tone) {
+  const base = String(topic || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const normalizedTone = String(tone || "practical").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const seed = `${base || "story"}-${normalizedTone || "default"}`;
+
+  // picsum returns a valid image without API keys and keeps the same image per seed.
+  return `https://picsum.photos/seed/${seed}/1200/700`;
+}
+
+function generateDraftFromPrompt(input) {
+  const topic = String(input?.topic || "").trim();
+  const tone = String(input?.tone || "practical").trim().toLowerCase();
+  const audience = String(input?.audience || "style-focused shoppers").trim();
+  const title = buildTitleFromTopic(topic, tone);
+  const category = buildCategoryFromTopic(topic);
+
+  const paragraphOne = `${title} starts with a single goal: make ${audience} look styled without overcomplicating the process. Begin with one anchor piece, then show how supporting layers change the vibe from casual to statement.`;
+  const paragraphTwo = `Break ${topic} into three wearable moves: silhouette balance, texture contrast, and color direction. Give one real outfit example for each move so readers can copy the formula instantly.`;
+  const paragraphThree = `Close with a quick fit-check checklist: proportions, comfort, and one standout detail. This helps readers build confidence, shop smarter, and actually wear what they buy.`;
+
+  const content = [paragraphOne, paragraphTwo, paragraphThree].join("\n\n");
+  const excerpt = `A ${tone} outfit blueprint for ${topic} with wearable steps, real examples, and quick styling wins.`;
+  const image = buildCoverImageUrl(topic, tone);
+  const keywords = extractKeywords(`${topic} ${content}`, 6);
+
+  return {
+    title,
+    category,
+    image,
+    excerpt,
+    content,
+    keywords,
+    readingTimeMinutes: estimateReadingTime(content),
+  };
+}
+
+function getRecommendations(seedBlogId, limit = 3) {
+  const seedId = Number(seedBlogId);
+  const desiredLimit = Math.max(1, Number(limit) || 3);
+  const seedBlog = blogs.find((entry) => entry.id === seedId) || blogs[0] || null;
+
+  if (!seedBlog) {
+    return [];
+  }
+
+  const seedWords = new Set(normalizeWords(toSearchableText(seedBlog)));
+
+  return blogs
+    .filter((entry) => entry.id !== seedBlog.id)
+    .map((entry) => {
+      const words = normalizeWords(toSearchableText(entry));
+      const overlap = words.reduce((count, word) => count + (seedWords.has(word) ? 1 : 0), 0);
+      const categoryBoost = entry.category === seedBlog.category ? 2 : 0;
+
+      return {
+        ...entry,
+        score: overlap + categoryBoost,
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, desiredLimit)
+    .map(({ score, ...entry }) => entry);
 }
 
 function sanitizeRole(inputRole) {
@@ -109,6 +313,16 @@ function requireWriterRole(req, res, next) {
   if (!req.user || !writerRoleSet.has(req.user.role)) {
     return res.status(403).json({
       error: "Only editor or administrator accounts can manage blogs",
+    });
+  }
+
+  return next();
+}
+
+function requireAdministrator(req, res, next) {
+  if (!req.user || req.user.role !== "administrator") {
+    return res.status(403).json({
+      error: "Only administrator accounts can delete blogs",
     });
   }
 
@@ -269,6 +483,26 @@ app.get("/api/blogs/:id", (req, res) => {
   return res.json(blog);
 });
 
+app.get("/api/drops", (req, res) => {
+  const status = String(req.query.status || "").trim().toLowerCase();
+  const limit = Number(req.query.limit || 0);
+
+  let result = drops;
+
+  if (status) {
+    result = result.filter((item) => String(item.status || "").toLowerCase() === status);
+  }
+
+  if (!Number.isNaN(limit) && limit > 0) {
+    result = result.slice(0, limit);
+  }
+
+  res.json({
+    count: result.length,
+    items: result,
+  });
+});
+
 app.get("/api/pages", (req, res) => {
   const items = Object.values(pages).map((entry) => ({
     slug: entry.slug,
@@ -291,6 +525,51 @@ app.get("/api/pages/:slug", (req, res) => {
   }
 
   return res.json(page);
+});
+
+app.post("/api/ai/generate-draft", requireAuth, requireWriterRole, (req, res) => {
+  const topic = String(req.body?.topic || "").trim();
+
+  if (!topic || topic.length < 4) {
+    return res.status(400).json({ error: "Please provide a topic with at least 4 characters" });
+  }
+
+  const draft = generateDraftFromPrompt(req.body || {});
+  return res.json({
+    topic,
+    model: "local-template-ai",
+    draft,
+  });
+});
+
+app.post("/api/ai/summarize", (req, res) => {
+  const text = String(req.body?.text || "").trim();
+
+  if (!text || text.length < 40) {
+    return res.status(400).json({ error: "Please provide at least 40 characters to summarize" });
+  }
+
+  const { summary, bulletPoints } = summarizeText(text, 2);
+  const keywords = extractKeywords(text, 6);
+
+  return res.json({
+    model: "local-extractive-ai",
+    summary,
+    bulletPoints,
+    keywords,
+    readingTimeMinutes: estimateReadingTime(text),
+  });
+});
+
+app.get("/api/ai/recommendations", (req, res) => {
+  const seedId = Number(req.query.seedId || 0);
+  const limit = Number(req.query.limit || 3);
+  const items = getRecommendations(seedId, limit);
+
+  res.json({
+    count: items.length,
+    items,
+  });
 });
 
 app.post("/api/blogs", requireAuth, requireWriterRole, (req, res) => {
@@ -357,18 +636,12 @@ app.put("/api/blogs/:id", requireAuth, requireWriterRole, (req, res) => {
   return res.json(targetBlog);
 });
 
-app.delete("/api/blogs/:id", requireAuth, requireWriterRole, (req, res) => {
+app.delete("/api/blogs/:id", requireAuth, requireAdministrator, (req, res) => {
   const id = Number(req.params.id);
   const targetBlog = blogs.find((entry) => entry.id === id);
 
   if (!targetBlog) {
     return res.status(404).json({ error: "Blog not found" });
-  }
-
-  if (!canManageBlog(req.user, targetBlog)) {
-    return res.status(403).json({
-      error: "You can only delete blogs you created unless you are an administrator",
-    });
   }
 
   const removeIndex = blogs.findIndex((entry) => entry.id === id);

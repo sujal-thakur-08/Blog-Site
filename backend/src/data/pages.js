@@ -3,45 +3,45 @@ const pages = {
     slug: "help-center",
     title: "Help Center",
     summary:
-      "Find quick answers for publishing, account settings, and troubleshooting common issues.",
+      "Find quick answers for orders, sizing, shipping, and account support.",
     sections: [
       {
-        heading: "Getting Started",
+        heading: "Ordering Basics",
         body:
-          "Create your profile, publish your first story, and set your reading preferences in under five minutes.",
+          "Create your account, pick your fit, and complete checkout in under two minutes.",
       },
       {
         heading: "Account And Security",
         body:
-          "Manage password changes, two-factor authentication, and connected devices from your account dashboard.",
+          "Manage password updates, login sessions, and profile details from your account dashboard.",
       },
       {
         heading: "Need More Help?",
         body:
-          "If an issue persists, contact support with screenshots and your browser details for faster resolution.",
+          "If an issue persists, contact support with your order number and screenshots for faster help.",
       },
     ],
   },
   "publishing-guide": {
     slug: "publishing-guide",
-    title: "Publishing Guide",
+    title: "Lookbook Guide",
     summary:
-      "Learn the editorial workflow used by top creators to ship high-quality stories consistently.",
+      "Learn how to style, photograph, and present pieces like a modern digital lookbook.",
     sections: [
       {
-        heading: "Draft Structure",
+        heading: "Shoot Structure",
         body:
-          "Start with a promise in your opening paragraph, then organize sections using descriptive subheadings.",
+          "Start with one hero outfit, then capture detail shots and movement clips for each piece.",
       },
       {
         heading: "Media And Formatting",
         body:
-          "Use one lead image, keep paragraph length short, and add pull quotes for improved readability.",
+          "Use one lead image per drop, keep captions direct, and add fit notes for each model.",
       },
       {
-        heading: "Pre-Publish Checklist",
+        heading: "Pre-Release Checklist",
         body:
-          "Verify links, metadata, and spelling. Then preview on mobile and desktop before pressing publish.",
+          "Verify SKU links, stock numbers, and size charts. Then preview on mobile before launch.",
       },
     ],
   },
@@ -49,22 +49,22 @@ const pages = {
     slug: "video-tutorials",
     title: "Video Tutorials",
     summary:
-      "Step-by-step walkthroughs for writing, design customization, analytics, and audience growth.",
+      "Step-by-step walkthroughs for outfit reels, product photography, and brand growth.",
     sections: [
       {
         heading: "Beginner Playlist",
         body:
-          "Set up your blog theme, navigation, and first article layout using simple guided lessons.",
+          "Learn framing, lighting, and basic styling transitions for social clips.",
       },
       {
         heading: "Growth Playlist",
         body:
-          "Learn newsletter setup, SEO basics, and practical content repurposing strategies.",
+          "Learn launch week content planning, creator collabs, and audience retention.",
       },
       {
         heading: "Advanced Playlist",
         body:
-          "Dive into custom integrations, automation workflows, and performance optimization tips.",
+          "Master multi-look shoots, post-production flow, and paid campaign optimization.",
       },
     ],
   },
@@ -72,7 +72,7 @@ const pages = {
     slug: "terms-of-service",
     title: "Terms Of Service",
     summary:
-      "The rules and responsibilities for using Corbin & Hudson publishing tools and services.",
+      "The rules and responsibilities for using Corbin & Hudson apparel services.",
     sections: [
       {
         heading: "Acceptable Use",
@@ -87,7 +87,7 @@ const pages = {
       {
         heading: "Service Changes",
         body:
-          "Features may evolve over time to improve reliability, security, and publishing quality.",
+          "Services may evolve over time to improve ordering, delivery, and account security.",
       },
     ],
   },
@@ -105,7 +105,7 @@ const pages = {
       {
         heading: "How Data Is Used",
         body:
-          "Data helps personalize your feed, improve performance, and send important service updates.",
+          "Data helps personalize recommendations, improve performance, and send order updates.",
       },
       {
         heading: "Your Controls",
@@ -118,12 +118,12 @@ const pages = {
     slug: "content-policy",
     title: "Content Policy",
     summary:
-      "Guidelines that maintain a safe, respectful, and high-quality publishing environment.",
+      "Guidelines that maintain a safe, respectful, and high-quality style community.",
     sections: [
       {
         heading: "Quality Standards",
         body:
-          "Publish original and truthful material. Clearly label sponsored or AI-assisted content when required.",
+          "Share original and truthful style content. Clearly label sponsored or AI-assisted posts.",
       },
       {
         heading: "Prohibited Content",
